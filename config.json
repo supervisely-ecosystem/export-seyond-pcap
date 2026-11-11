@@ -1,0 +1,26 @@
+{
+  "name": "Export Seyond lidar pcap",
+  "type": "app",
+  "categories": ["pointclouds", "episodes", "export"],
+  "description": "Export the original Seyond lidar pcap captures of a project, each once, with labels that Auto Import re-attaches",
+  "docker_image": "supervisely/base-py-sdk-hardened:6.74.54",
+  "instance_version": "6.18.14",
+  "main_script": "src/main.py",
+  "modal_template": "src/modal.html",
+  "modal_template_state": {
+    "linksOnly": false
+  },
+  "task_location": "workspace_tasks",
+  "isolate": true,
+  "headless": true,
+  "icon_background": "#FFFFFF",
+  "context_menu": {
+    "target": [
+      "point_cloud_project",
+      "point_cloud_dataset",
+      "point_cloud_episodes_project",
+      "point_cloud_episodes_dataset"
+    ],
+    "context_root": "Download as"
+  }
+}
