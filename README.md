@@ -1,4 +1,5 @@
 <div align="center" markdown>
+<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/54ec8b8a58eac4826a8c595c728a84daaceefab2/assets/poster.png" alt="Export Seyond lidar pcap">
 
 # Export Seyond lidar pcap
 
