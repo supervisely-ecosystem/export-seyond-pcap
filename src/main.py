@@ -1,4 +1,4 @@
-"""Export Seyond lidar pcap: headless task from "Download as" of a point cloud (episodes) project or dataset."""
+"""Export PCAP captures (Seyond Falcon): headless task from "Download as" of a point cloud (episodes) project or dataset."""
 
 import os
 
@@ -9,7 +9,7 @@ import workflow as w
 from export import plan_export, write_archive
 from settings import Settings
 
-RESULT_DIR_NAME = "Export Seyond lidar pcap"
+RESULT_DIR_NAME = "Export PCAP captures (Seyond Falcon)"
 
 
 def upload_archive(api: sly.Api, team_id: int, task_id, local_archive: str, archive_name: str):

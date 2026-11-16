@@ -1,7 +1,9 @@
 <div align="center" markdown>
-<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/54ec8b8a58eac4826a8c595c728a84daaceefab2/assets/poster.png" alt="Export Seyond lidar pcap">
+<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/54ec8b8a58eac4826a8c595c728a84daaceefab2/assets/poster.png" alt="Export PCAP captures (Seyond Falcon)">
 
-# Export Seyond lidar pcap
+# Export PCAP captures (Seyond Falcon)
+
+Developed by Supervisely. Not affiliated with or endorsed by Seyond.
 
 <p align="center">
   <a href="#Overview">Overview</a> •
@@ -19,8 +21,10 @@
 
 # Overview
 
-Seyond (Innovusion) lidar captures are raw `libpcap` files of the sensor's UDP output: one file holds
-a whole recording with hundreds of lidar frames. When such a capture is imported, Supervisely stores
+PCAP is a generic network packet-capture container, not a Seyond-owned file format.
+This app exports original captures from the supported **Seyond Falcon** workflow: standard
+`libpcap` files containing the sensor's own UDP packets. Seyond defines the lidar packet payload.
+One file holds a whole recording with hundreds of lidar frames. When such a capture is imported, Supervisely stores
 the file once and adds one point cloud item per frame that reuses it; the labeling tool decodes each
 item's frame from the file.
 
@@ -39,11 +43,11 @@ from cloud storage are copied too, unless **Links only** is selected (see below)
 # How To Run
 
 1. Open the context menu of a **Point Clouds** or **Point Cloud Episodes** project or dataset →
-   `Download as` → `Export Seyond lidar pcap`.
+   `Download as` → `Export PCAP captures (Seyond Falcon)`.
 2. Choose whether captures linked from cloud storage are copied (default) or only listed
    (**Links only**), and press **Run**.
 3. When the task finishes, download the archive from the `Tasks` page, or from `Team Files` →
-   `tmp` → `supervisely` → `export` → `Export Seyond lidar pcap` →
+   `tmp` → `supervisely` → `export` → `Export PCAP captures (Seyond Falcon)` →
    `<task id>_<project id>_<project name>[_<dataset name>].tar`.
 
 The archive is an uncompressed `.tar` (pcap captures do not compress); its size is about the sum of the
