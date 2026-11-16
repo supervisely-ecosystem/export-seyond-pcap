@@ -1,5 +1,5 @@
 {
-  "name": "Export PCAP captures (Seyond Falcon)",
+  "name": "Export PCAP captures",
   "type": "app",
   "categories": ["pointclouds", "episodes", "export"],
   "description": "Export original PCAP captures from the supported Seyond Falcon workflow with labels.",
