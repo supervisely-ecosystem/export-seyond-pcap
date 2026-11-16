@@ -3,7 +3,6 @@
 
 # Export PCAP captures (Seyond Falcon)
 
-Developed by Supervisely. Not affiliated with or endorsed by Seyond.
 
 <p align="center">
   <a href="#Overview">Overview</a> •
@@ -132,3 +131,5 @@ Requires the Supervisely version with the Seyond pcap importer in Auto Import.
 - `docker_image` is pinned to `supervisely/base-py-sdk-hardened:6.74.54` (and `supervisely==6.74.54`
   in `dev_requirements.txt`) for now. **Bump both** to the SDK release that ships the Seyond pcap
   importer once it is released, and then replace `src/naming.py`'s copy of `sensor_key` with the SDK's.
+
+Not affiliated with or endorsed by Seyond.

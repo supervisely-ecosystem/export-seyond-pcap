@@ -2,7 +2,7 @@
   "name": "Export PCAP captures (Seyond Falcon)",
   "type": "app",
   "categories": ["pointclouds", "episodes", "export"],
-  "description": "By Supervisely. Export original PCAP captures from the supported Seyond Falcon workflow with labels. Not affiliated with or endorsed by Seyond.",
+  "description": "Export original PCAP captures from the supported Seyond Falcon workflow with labels.",
   "docker_image": "supervisely/base-py-sdk-hardened:6.74.54",
   "instance_version": "6.18.14",
   "main_script": "src/main.py",
