@@ -1,0 +1,8 @@
+<div>
+    <sly-field title="Captures in cloud storage"
+               description="Captures uploaded to Supervisely are always copied into the archive">
+        <el-checkbox v-model="state.linksOnly">
+            Links only: list linked captures in links.json instead of copying their bytes
+        </el-checkbox>
+    </sly-field>
+</div>

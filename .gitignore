@@ -1,0 +1,11 @@
+secret_debug.env
+.idea
+venv
+.venv
+debug/
+src/debug
+supervisely
+.DS_Store
+__pycache__
+*.pyc
+.pytest_cache/
