@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/4a729e5773f7a9bd037732aadc8b0590924cf46b/assets/poster-clean.png" alt="Export PCAP captures">
+<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/3564284d2799b797d628ab1d602fb8d2dde3c20a/assets/poster-generic.png" alt="Export PCAP captures">
 
 # Export PCAP captures
 
