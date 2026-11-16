@@ -1,7 +1,7 @@
 <div align="center" markdown>
-<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/4a729e5773f7a9bd037732aadc8b0590924cf46b/assets/poster-clean.png" alt="Export PCAP captures (Seyond Falcon)">
+<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/3564284d2799b797d628ab1d602fb8d2dde3c20a/assets/poster-generic.png" alt="Export PCAP captures">
 
-# Export PCAP captures (Seyond Falcon)
+# Export PCAP captures
 
 
 <p align="center">
@@ -42,11 +42,11 @@ from cloud storage are copied too, unless **Links only** is selected (see below)
 # How To Run
 
 1. Open the context menu of a **Point Clouds** or **Point Cloud Episodes** project or dataset →
-   `Download as` → `Export PCAP captures (Seyond Falcon)`.
+   `Download as` → `Export PCAP captures`.
 2. Choose whether captures linked from cloud storage are copied (default) or only listed
    (**Links only**), and press **Run**.
 3. When the task finishes, download the archive from the `Tasks` page, or from `Team Files` →
-   `tmp` → `supervisely` → `export` → `Export PCAP captures (Seyond Falcon)` →
+   `tmp` → `supervisely` → `export` → `Export PCAP captures` →
    `<task id>_<project id>_<project name>[_<dataset name>].tar`.
 
 The archive is an uncompressed `.tar` (pcap captures do not compress); its size is about the sum of the
