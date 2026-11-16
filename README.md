@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/54ec8b8a58eac4826a8c595c728a84daaceefab2/assets/poster.png" alt="Export PCAP captures (Seyond Falcon)">
+<img src="https://raw.githubusercontent.com/supervisely-ecosystem/export-seyond-pcap/0b2e5c6f19868ee1e9cfff0c15743b183c1ebc9e/assets/poster-compatibility.png" alt="Export PCAP captures (Seyond Falcon)">
 
 # Export PCAP captures (Seyond Falcon)
 
