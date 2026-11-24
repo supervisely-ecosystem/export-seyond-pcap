@@ -2,9 +2,9 @@
   "name": "Export PCAP captures",
   "type": "app",
   "categories": ["pointclouds", "episodes", "export"],
-  "description": "Export original PCAP captures from the supported Seyond Falcon workflow with labels.",
+  "description": "Export original PCAP captures from the supported Seyond Falcon and Robin W workflow with labels.",
   "docker_image": "supervisely/base-py-sdk-hardened:6.74.54",
-  "instance_version": "6.18.14",
+  "instance_version": "6.18.21",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {

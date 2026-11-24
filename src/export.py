@@ -6,6 +6,7 @@ storage). This module finds the captures behind the items, fetches each one once
 
     <project name>/
       <capture paths>                 the captures, byte-identical to what was imported
+      <capture folder>/<serial>.anglehv   a Robin W sensor's angle table, kept with the dataset
       sensors.json                    {"sensors": {<sensor>: {"extrinsicMatrix": [12 numbers]}}}
       links.json                      {<capture path>: <link>}, "Links only" mode
       supervisely_labels/
@@ -46,6 +47,11 @@ LABELS_FILE_NAME = "labels.json"
 SENSORS_CONFIG_NAME = "sensors.json"
 LINKS_FILE_NAME = "links.json"
 CHECKSUMS_FILE_NAME = "checksums.sha256"
+# A Robin W capture is decoded with its sensor's angle table, which a dataset keeps as an
+# attachment: an entity of this type with meta.kind and meta.serial (the SDK importer writes them).
+ATTACHMENT_ENTITY_TYPE = "attachment"
+ANGLE_TABLE_KIND = "anglehvTable"
+ANGLE_TABLE_EXT = ".anglehv"
 
 DOWNLOAD_ATTEMPTS = 3
 ANNOTATIONS_BATCH = 50
@@ -82,6 +88,15 @@ class Capture:
 
 
 @dataclass
+class AngleTable:
+    """An angle table kept with a dataset, written as ``<serial>.anglehv`` next to its captures."""
+
+    serial: str
+    entity_id: int
+    hash: str
+
+
+@dataclass
 class DatasetExport:
     path: str  # the dataset path in the project, "parent/child"
     info: sly.DatasetInfo
@@ -96,6 +111,8 @@ class ExportPlan:
     captures: Dict[Tuple[str, str], Capture]
     datasets: List[DatasetExport]
     skipped_items: int = 0
+    #: capture folder -> serial -> the table written there
+    tables: Dict[str, Dict[str, AngleTable]] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------- plan
@@ -153,6 +170,30 @@ def _free_path(path: str, dataset_path: str, taken: set) -> str:
     return candidate
 
 
+def dataset_tables(api: sly.Api, dataset_id: int) -> Dict[str, AngleTable]:
+    """The Robin W angle tables a dataset keeps, by sensor serial number."""
+    entities = api.pointcloud.get_list_all_pages(
+        "entities.list",
+        {"datasetId": dataset_id, "type": ATTACHMENT_ENTITY_TYPE},
+        convert_json_info_cb=lambda entity: entity,
+    )
+    tables = {}
+    for entity in entities:
+        meta = entity.get("meta") if isinstance(entity.get("meta"), dict) else {}
+        serial = meta.get("serial")
+        if meta.get("kind") != ANGLE_TABLE_KIND or not serial or not entity.get("hash"):
+            continue
+        if posixpath.basename(str(serial)) != serial or serial in (".", ".."):
+            sly.logger.warning(f"Skipped the angle table of dataset {dataset_id} with serial {serial!r}.")
+            continue
+        tables.setdefault(serial, AngleTable(serial, entity["id"], entity["hash"]))
+    return tables
+
+
+def _tables_conflict(folder_tables: Dict[str, AngleTable], tables: Dict[str, AngleTable]) -> bool:
+    return any(s in folder_tables and folder_tables[s].hash != t.hash for s, t in tables.items())
+
+
 def plan_export(api: sly.Api, project_id: int, dataset_id: Optional[int] = None) -> ExportPlan:
     """Find the captures behind the items and every item's (capture, frame in capture)."""
     project = api.project.get_info_by_id(project_id)
@@ -177,6 +218,7 @@ def plan_export(api: sly.Api, project_id: int, dataset_id: Optional[int] = None)
             groups[key].append(item)
         if not groups:
             continue
+        tables = dataset_tables(api, ds.id)
 
         frames, pcap_items = [], []
         for key, group in groups.items():
@@ -202,10 +244,25 @@ def plan_export(api: sly.Api, project_id: int, dataset_id: Optional[int] = None)
                         stem = os.path.splitext(base)[0]
                     source_file = f"{ds_path}/{stem}{PCAP_EXT}"
                 path = _free_path(source_file, ds_path, taken_paths)
+                # a folder holds one table per sensor: a capture whose dataset keeps another table
+                # for a sensor of that folder goes to a folder of its own
+                n = 1
+                while _tables_conflict(plan.tables.get(posixpath.dirname(path), {}), tables):
+                    n += 1
+                    path = _free_path(f"tables-{n}/{ds_path}/{source_file}", ds_path, taken_paths)
                 taken_paths.add(path)
                 sensor = next((s["sensor"] for s in sources if s.get("sensor")), None)
                 capture = Capture(key, group[0].id, path, sensor or sensor_key(path))
                 plan.captures[key] = capture
+
+            folder_tables = plan.tables.setdefault(posixpath.dirname(capture.path), {})
+            if _tables_conflict(folder_tables, tables):
+                sly.logger.warning(
+                    f"'{capture.path}' is in datasets that keep different angle tables for one "
+                    "sensor: the first dataset's table is written next to it."
+                )
+            for serial, table in tables.items():
+                folder_tables.setdefault(serial, table)
 
             for item, item_meta, source, number in zip(group, metas, sources, numbers):
                 frame_in_file = source.get("frameInFile")
@@ -338,6 +395,29 @@ def fetch_capture(api: sly.Api, capture: Capture, path: str) -> None:
             time.sleep(5 * attempt)
 
 
+def fetch_table(api: sly.Api, table: AngleTable, path: str) -> bytes:
+    """Download an angle table and check it is the one the dataset keeps (its hash)."""
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        try:
+            api.pointcloud.download_path(table.entity_id, path)
+            with open(path, "rb") as f:
+                data = f.read()
+            digest = base64.b64encode(hashlib.sha256(data).digest()).decode()
+            if digest != table.hash:
+                raise RuntimeError(f"the downloaded file has hash {digest}, expected {table.hash}")
+            return data
+        except Exception as e:  # noqa: BLE001 - retried, then raised
+            if attempt == DOWNLOAD_ATTEMPTS:
+                raise RuntimeError(
+                    f"Cannot download the angle table of sensor {table.serial} "
+                    f"(entity {table.entity_id}): {e}"
+                ) from e
+            sly.logger.warning(f"Download of the angle table of {table.serial} failed ({e}), retrying...")
+            time.sleep(5 * attempt)
+        finally:
+            sly.fs.silent_remove(path)
+
+
 def _add_bytes(tar: tarfile.TarFile, arcname: str, data: bytes) -> None:
     info = tarfile.TarInfo(arcname)
     info.size = len(data)
@@ -371,6 +451,18 @@ def write_archive(
             sly.fs.silent_remove(temp_path)
             progress.update(1)
 
+        table_sums = []
+        fetched: Dict[int, bytes] = {}
+        for folder, tables in sorted(plan.tables.items()):
+            for serial, table in sorted(tables.items()):
+                if table.entity_id not in fetched:
+                    temp_table = os.path.join(work_dir, f"table-in-progress{ANGLE_TABLE_EXT}")
+                    fetched[table.entity_id] = fetch_table(api, table, temp_table)
+                data = fetched[table.entity_id]
+                path = posixpath.join(folder, f"{serial}{ANGLE_TABLE_EXT}")
+                _add_bytes(tar, f"{root}/{path}", data)
+                table_sums.append(f"{hashlib.sha256(data).hexdigest()}  {path}\n")
+
         sensors = sensors_config(captures)
         if sensors:
             _add_bytes(tar, f"{root}/{SENSORS_CONFIG_NAME}", _json_bytes(sensors))
@@ -381,14 +473,15 @@ def write_archive(
         for ds in plan.datasets:
             labels = {"frames": ds.frames, **ds.labels}
             _add_bytes(tar, f"{labels_root}/{ds.path}/{LABELS_FILE_NAME}", _json_bytes(labels))
-        if to_fetch:
-            checksums = "".join(f"{c.sha256}  {c.path}\n" for c in to_fetch)
+        if to_fetch or table_sums:
+            checksums = "".join(f"{c.sha256}  {c.path}\n" for c in to_fetch) + "".join(table_sums)
             _add_bytes(tar, f"{root}/{CHECKSUMS_FILE_NAME}", checksums.encode("utf-8"))
 
     summary = {
         "captures": len(captures),
         "downloaded": len(to_fetch),
         "links": len(links),
+        "angle_tables": len(table_sums),
         "bytes": sum(c.size or 0 for c in to_fetch),
         "datasets": len(plan.datasets),
         "frames": sum(len(ds.frames) for ds in plan.datasets),
