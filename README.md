@@ -21,7 +21,7 @@
 # Overview
 
 PCAP is a generic network packet-capture container, not a Seyond-owned file format.
-This app exports original captures from the supported **Seyond Falcon** workflow: standard
+This app exports original captures from the supported **Seyond Falcon** and **Robin W** workflow: standard
 `libpcap` files containing the sensor's own UDP packets. Seyond defines the lidar packet payload.
 One file holds a whole recording with hundreds of lidar frames. When such a capture is imported, Supervisely stores
 the file once and adds one point cloud item per frame that reuses it; the labeling tool decodes each
@@ -34,7 +34,10 @@ nested datasets) as it was imported:
   **once**, however many frames (items) use it;
 - the **labels** of every frame, with the capture and the frame in the capture each item shows, so
   that importing the folder again puts every label back on the same lidar frame;
-- the **sensor mounts** (`sensors.json`) and a **`checksums.sha256`** of the captures.
+- the **sensor mounts** (`sensors.json`) and a **`checksums.sha256`** of the captures;
+- the **angle table** of each Robin W sensor, as `<serial>.anglehv` next to its captures. A Robin W
+  capture is decoded with its sensor's table, which the capture itself does not hold; the dataset
+  keeps it, and the export writes it back so that the folder imports again without the vehicle log.
 
 Captures uploaded to Supervisely are checked against their stored hash after download. Captures linked
 from cloud storage are copied too, unless **Links only** is selected (see below).
@@ -57,9 +60,10 @@ captures.
 ```
 <project name>/
   <dataset path>/<capture>.pcap       original captures, each written once
+  <dataset path>/<serial>.anglehv     Robin W angle tables, next to their captures
   sensors.json                        {"sensors": {<sensor>: {"extrinsicMatrix": [12 numbers]}}}
   links.json                          {<capture path>: <link>}   ("Links only" only)
-  checksums.sha256                    sha256 of every exported capture (sha256sum format)
+  checksums.sha256                    sha256 of every exported capture and table (sha256sum format)
   supervisely_labels/
     project_meta.json                 classes and tags of the project
     <dataset path>/labels.json
@@ -94,6 +98,9 @@ captures.
 - Labels are exported as they are: in world axes, after the sensor's matrix.
 - Where a capture is written: the path it was imported from, when the items keep it; otherwise
   `<dataset path>/<capture name>.pcap`, the capture name being the item name without its frame number.
+- A folder holds one angle table per sensor. When two datasets keep different tables for one sensor
+  (it was recalibrated between recordings) and their captures would share a folder, the second
+  capture goes to `tables-N/<dataset path>/` with its own table, and its labels follow it.
 
 **Links only.** Captures linked from cloud storage (for example `s3://...`) are not copied: `links.json`
 lists the path each one would have and its link. Captures uploaded to Supervisely are still copied.
@@ -103,11 +110,12 @@ To import such an export again, put each linked capture at its path first.
 
 Upload the extracted `<project name>` folder (or the archive's contents) to Team Files and run
 **Auto Import** on it, into a **Point Clouds** or **Point Cloud Episodes** project. The Seyond pcap
-importer reads the captures and `sensors.json`, finds `supervisely_labels/`, and attaches the exported
+importer reads the captures, `sensors.json` and the Robin W angle tables, finds `supervisely_labels/`, and attaches the exported
 labels to the frames they were on, matched by capture file and frame in the capture (not by item name
 or dataset). For point cloud episodes the captures are chained into episodes again by sensor and time.
 
-Requires the Supervisely version with the Seyond pcap importer in Auto Import.
+Requires the Supervisely version with the Seyond pcap importer in Auto Import. Robin W captures and
+their angle tables need Supervisely 6.18.21 or later.
 
 # Notes
 
